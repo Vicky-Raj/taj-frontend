@@ -1,0 +1,41 @@
+------------new order-----------
+
+/neworder(get)
+
+      {
+        list: [
+          { title: 'idli', rate: 5 },
+          { title: 'dosa', rate: 20 },
+          { title: 'pongal', rate: 50 },
+          { title: 'vada', rate: 4 }
+        ],
+        sublist = [
+          { title: 'idli', rate: 5 },
+          { title: 'dosa', rate: 20 },
+          { title: 'pongal', rate: 50 },
+          { title: 'vada', rate: 4 }
+        ]
+      }
+
+//neworder(post)
+
+    -----body------
+
+    address: ""
+    advance: 0
+    amount: 432
+    date: Mon Aug 18 2014 21:11:54 GMT+0530 (India Standard Time) {}
+    invoice: ""
+    list: [{…}]
+    name: ""
+    phone: ""
+    session: ""
+    sublist: [{…}]
+
+    -----/body-------
+Note:
+
+  list : [{item: "pongal", quantity: "8", rate: 50, amount: 400},]
+  sublist : [{item: "pongal", quantity: "8", rate: 50, amount: 400},]
+
+------------/neworder-----------------
