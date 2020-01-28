@@ -23,14 +23,15 @@ export default ()=>{
 	const [date,setDate] = useState(new Date());
 	const [session,setSession] = useState("FN");
 	const [orders,setOrders] = useState([]);
+	const [confirmed,setConfirmed] = useState(true);
 
 	useEffect(()=>{
-		axios.get(`${URL}/hotel/vieworder/customer/`,{params:{date,session}})
+		axios.get(`${URL}/hotel/vieworder/customer/`,{params:{date,session,confirmed}})
 		.then(({data})=>{
 			setOrders(data)
 		})
 		.catch(err=>console.log(err))
-	},[date,session])
+	},[date,session,confirmed])
 
 	return(
 		<div>
@@ -67,6 +68,20 @@ export default ()=>{
 						style={{ margin: 0 }}
 						/>
 				</MuiPickersUtilsProvider>
+				
+				<div>
+				<InputLabel id="demo-simple-select-label" style={{marginTop:"20px"}}>Order Status</InputLabel>
+				<Select
+				style={{width:"8rem"}}
+				labelId="demsetSession(e.target.value)o-simple-select-label"
+				id="demo-simple-select"
+				value={confirmed}
+				onChange={e=>setConfirmed(e.target.value)}
+				>
+					<MenuItem value={true}>CONFIRMED</MenuItem>
+					<MenuItem value={false}>NOT CONFIRMED</MenuItem>
+				</Select>
+				</div>
 
 				<Button
 				startIcon={<Print/>}

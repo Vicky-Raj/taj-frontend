@@ -70,77 +70,48 @@ const OrderReport = () => {
 	Print
 	</Button>
 	
-	const [date,setDate] = useState(null);
-	const [orderState, setOrderState] = React.useState({
-		columns: [
-			{ title: 'S.No', field: 'sno' },
-			{ title: 'Invoice No', field: 'invoice' },
-			{ title: 'Name', field: 'name' },
-			{ title: 'Session', field: 'session' },
-			{
-				title: 'Ph. no',
-				field: 'phoneno',
-			},
-			{
-				title: 'vessel',
-				field: 'vessel',
-			},
-			{ title: 'placed date', field: 'placed_date' },
-			{
-				title: 'delivery date',
-				field: 'delivery_date',
-			},
-			{ title: 'Amount', field: 'amount' },
-		],
-		data: [],
-		store:[]
-	})
+	const columns = [
+		{ title: 'S.No', field: 'sno' },
+		{ title: 'Invoice No', field: 'invoice' },
+		{ title: 'Name', field: 'name' },
+		{ title: 'Session', field: 'session' },
+		{
+			title: 'Ph. no',
+			field: 'phoneno',
+		},
+		{
+			title: 'vessel',
+			field: 'vessel',
+		},
+		{ title: 'placed date', field: 'placed_date' },
+		{
+			title: 'delivery date',
+			field: 'delivery_date',
+		},
+		{ title: 'Amount', field: 'amount' },
+	];
+
+	const [date,setDate] = useState(new Date());
+	const [orderState, setOrderState] = useState([]);
 
 
 	useEffect(()=>{
-		if(date){
-		const selected  = moment(date).format("YYYY-MM-DD");
-		setOrderState(state=>({
-			...state,
-			data:state.store.filter(data=>data.date_of_delivery.trim() === selected)
-			.map((data,index)=>(
-			{
+		axios.get(`${URL}/hotel/history/order/`,{params:{date}})
+		.then(({data})=>setOrderState(
+				data.map((data,index)=>({
 				sno: index + 1,
 				name: data.name,
 				invoice: data.invoice_no,
 				session: data.session,
 				phoneno: data.phone_num,
-				placed_date: data.date_placed,
-				delivery_date: data.date_of_delivery,
+				placed_date: moment(data.date_placed).format("DD-MM-YYYY"),
+				delivery_date: moment(data.date_of_delivery).format("DD-MM-YYYY"),
 				amount: data.paid ? 'paid' : 'not paid',
 				vessel: data.returned_vessel ? 'returned' : 'not returned',
-			}
-			))
-		}))		
-		}
-	},[date])
-
-	useEffect(()=>{
-		axios.get(`${URL}/hotel/order/`)
-		.then(res=>setOrderState(
-			state=>({
-				...state,
-				data:res.data.map((data,index)=>({
-					sno: index + 1,
-					name: data.name,
-					invoice: data.invoice_no,
-					session: data.session,
-					phoneno: data.phone_num,
-					placed_date: data.date_placed,
-					delivery_date: data.date_of_delivery,
-					amount: data.paid ? 'paid' : 'not paid',
-					vessel: data.returned_vessel ? 'returned' : 'not returned',
-				})),
-				store:res.data
-			})
+			})),
 		))
 		.catch(err=>console.log(err))		
-	},[])
+	},[date])
 
 	return (
 		<div>
@@ -175,15 +146,15 @@ const OrderReport = () => {
 
 			<MaterialTable
 				title=''
-				columns={orderState.columns}
-				data={orderState.data}
+				columns={columns}
+				data={orderState}
 			/>
 			<div style={{display:"none"}}>
-			<ToPrint data={orderState.data} ref={componentRef} format={format}/>
+			<ToPrint data={orderState} ref={componentRef} format={format}/>
 			</div>
 		</div>
 	)
 }
 
-export default OrderReport
+export default OrderReport;
 

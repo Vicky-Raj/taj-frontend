@@ -49,8 +49,9 @@ const useStyles = makeStyles(theme => ({
 
 
 const EstimatedOrder = () => {
+
 	const classes = useStyles();
-	const [date,setDate] = useState(null);
+	const [date,setDate] = useState(new Date());
 	const componentRef = useRef();
 	const format = {
 		"Invoice No":"invoice",
@@ -58,7 +59,6 @@ const EstimatedOrder = () => {
 		"Ph.no":"phoneno",
 		"Date Placed":"placed_date",
 		"Delivery Date":"delivery_date",
-		
 	}
 	const PrintButton = <Button
 	style={{ marginLeft: '50%', marginTop: '8%' }}
@@ -69,9 +69,7 @@ const EstimatedOrder = () => {
 	startIcon={<Print />}>
 	Print
 	</Button>
-
-	const [orderState, setOrderState] = React.useState({
-		columns: [
+	const columns = [
 			{ title: 'S.No', field: 'sno' },
 			{ title: 'Invoice No', field: 'invoice' },
 			{ title: 'Name', field: 'name' },
@@ -86,53 +84,24 @@ const EstimatedOrder = () => {
 				title: 'delivery date',
 				field: 'delivery_date',
 			},
-		],
-		data: [],
-		store:[]
-	})
+	];
+	const [orderState, setOrderState] = useState([]);
 
 	useEffect(()=>{
-		if(date){
-		const selected  = moment(date).format("YYYY-MM-DD");
-		setOrderState(state=>({
-			...state,
-			data:state.store.filter(data=>data.date_of_delivery.trim() === selected)
-			.map((data,index)=>(
-			{
+		axios.get(`${URL}/hotel/history/estimated/`,{params:{date}})
+		.then(({data})=>{
+			setOrderState(data.map((order,index)=>({
 				sno:index+1,
-				name:data.name,
-				invoice:data.invoice_no,
-				phoneno:data.phone_num,
-				placed_date:data.date_placed,
-				delivery_date:data.date_of_delivery
-			}
-			))
-		}))		
-		}
+				invoice:order.invoice,
+				name:order.name,
+				phoneno:order.phoneno,
+				placed_date:moment(order.placed_date).format("DD-MM-YYYY"),
+				delivery_date:moment(order.delivery_date).format("DD-MM-YYYY")
+			})))
+		})
+		.catch(err=>console.log(err));
 	},[date])
 
-	useEffect(()=>{
-		axios.get(`${URL}/hotel/order/`)
-		.then(res=>setOrderState(
-			state=>({
-				...state,
-				data:res.data.map((data,index)=>({
-					sno:index+1,
-					name:data.name,
-					invoice:data.invoice_no,
-					phoneno:data.phone_num,
-					placed_date:data.date_placed,
-					delivery_date:data.date_of_delivery
-				})),
-				store:res.data
-			})
-		))
-		.catch(err=>console.log(err))		
-	},[])
-
-	useEffect(()=>{
-
-	},[orderState])
 
 	return (
 		<div>
@@ -167,11 +136,11 @@ const EstimatedOrder = () => {
 
 			<MaterialTable
 				title=''
-				columns={orderState.columns}
-				data={orderState.data}
+				columns={columns}
+				data={orderState}
 			/>
 			<div style={{display:"none"}}>
-			<ToPrint data={orderState.data} ref={componentRef} format={format}/>
+			<ToPrint data={orderState} ref={componentRef} format={format}/>
 			</div>
 		</div>
 	)

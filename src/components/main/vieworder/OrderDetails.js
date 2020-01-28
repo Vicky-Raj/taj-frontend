@@ -10,7 +10,8 @@ import {TextField,
 	InputLabel,
 	Snackbar,
 	SnackbarContent,
-	Button
+	Button,
+	Checkbox
 } from "@material-ui/core";
 import DateFnsUtils from '@date-io/date-fns'
 import {
@@ -19,16 +20,13 @@ import {
 } from '@material-ui/pickers'
 import axios from "axios";
 import {URL} from "../../../index";
-import {Error,ShoppingCart,Print} from "@material-ui/icons";
-import {red,deepPurple} from "@material-ui/core/colors"
+import {Error,Update,CheckCircle} from "@material-ui/icons";
+import {red,deepPurple,green} from "@material-ui/core/colors"
 import moment from "moment";
 
 export default ()=>{
 	const {id} = useParams();
 
-	const name = useRef();
-	const email = useRef();
-	const phoneNo = useRef();
 	const address = useRef();
 
 	const [defaults,setDefault] = useState({
@@ -49,10 +47,13 @@ export default ()=>{
 	const [orderedItems,setOrderedItems] = useState([]);
 	const [orderedSubItems,setOrderedSubItems] = useState([]);
 
+	const [paid,setPaid] = useState(false);
+	const [vessel,setVessel] = useState(false);
 
 	const [error,setError] = useState(false);
+	const [success,setSuccess] = useState(false);
 
-	console.log(defaults);
+	const [confirmed,setConfirmed] = useState(false);
 
 	useEffect(()=>{
 		axios.get(`${URL}/hotel/items`)
@@ -70,13 +71,16 @@ export default ()=>{
 				email:order.customer.email,
 				phoneNo:order.customer.phoneNo,
 			})
+
 			address.current.value = order.customer.address;
 			setDate(moment(order.date));
 			setSession(order.session);
-            // 'unique_id': item.unique_id,
-            //     'name': item.name,
-            //     'price': str(item.price),
-            //     'subitems': [subitem.name for subitem in item.subitems.all()]
+
+			setPaid(order.paid);
+			setVessel(order.vessel);
+			setAdvance(order.paidAmount);
+			setConfirmed(order.confirmed);
+
 			setOrderedItems(order.items.map(item=>({
 				item:{
 					unique_id:item.unique_id,
@@ -87,7 +91,18 @@ export default ()=>{
 				quantity:item.quantity,
 				rate:item.price,
 				amount:item.totalPrice
-			})));
+			})))
+
+			setOrderedSubItems(order.subitems.map(subitem=>({
+				item:{
+					unique_id:subitem.unique_id,
+					name:subitem.name,
+					price:subitem.price
+				},
+				quantity:subitem.quantity,
+				rate:subitem.price,
+				amount:subitem.totalPrice
+			})))
 
 		})
 		.catch(err=>console.log(err))
@@ -113,9 +128,9 @@ export default ()=>{
 	},[orderedSubItems,orderedItems])
 
 	const validate = ()=>{
-		return(name.current.value.trim().length !== 0 &&
-		email.current.value.trim().length !== 0 &&
-		phoneNo.current.value.trim().length !== 0 && 
+		return(defaults.name.trim().length !== 0 &&
+		defaults.email.trim().length !== 0 &&
+		defaults.phoneNo.trim().length !== 0 && 
 		address.current.value.trim().length !== 0 &&
 		orderedItems.length !== 0
 		);
@@ -134,29 +149,35 @@ export default ()=>{
 			amount:item.amount
 		}));
 		const customer = {
-			name:name.current.value,
-			email:email.current.value,
-			phoneNo:phoneNo.current.value,
+			name:defaults.name,
+			email:defaults.email,
+			phoneNo:defaults.phoneNo,
 			address:address.current.value,
 			date,
 			session
 		}
-		axios.post(`${URL}/hotel/order/`,{items:allItems,subItems:allSubItems,customer,total,advance,balance:total-advance})
-		.then()
-		.catch()
+		axios.put(`${URL}/hotel/order/`,{
+			id,
+			items:allItems,
+			subItems:allSubItems,
+			customer,
+			total,
+			advance,
+			balance:total-advance,
+			paid,
+			confirmed,
+			vessel
+		})
+		.then(()=>setSuccess(true))
+		.catch(err=>console.log(err))
 	}
 
-	const placeAndSave = ()=>{
+	const update = ()=>{
 		if(validate()){
 			sendData();
 		}else setError(true)
 	}
 
-	const printAndSave = ()=>{
-		if(validate()){
-
-		}else setError(true)
-	}
 
 	return (
 		<div style={{ maxWidth: '100%' }}>
@@ -164,24 +185,37 @@ export default ()=>{
 			<div style={{display:"flex",flexDirection:"column",justifyContent:"space-around",flex:"2"}}>
 				<Typography variant="h6" style={{color:"#00C853"}}>Customer Details</Typography>
 				<TextField
+				label="Inovice No"
+				value={id}
+				/>
+				<TextField
 				label="Name"
-				inputRef={name}
-				inputProps={{
-					value:defaults.name
+				value={defaults.name}
+				onChange={e=>{
+					setDefault(state=>({
+						...state,
+						name:e.target.value
+				}))
 				}}
 				/>
 				<TextField
 				label="Email"
-				inputRef={email}
-				inputProps={{
-					value:defaults.email
+				value={defaults.email}
+				onChange={e=>{
+					setDefault(state=>({
+						...state,
+						email:e.target.value
+					}))
 				}}
 				/>
 				<TextField
 				label="PhoneNo"
-				inputRef={phoneNo}
-				inputProps={{
-					value:defaults.phoneNo
+				value={defaults.phoneNo}
+				onChange={e=>{
+					setDefault(state=>({
+						...state,
+						phoneNo:e.target.value
+					}))
 				}}
 				/>
 			</div>
@@ -360,7 +394,6 @@ export default ()=>{
 		
     	editable={{
         onRowAdd: async data =>{
-			console.log(data);
 			if(data.item){
 				const quantity = Number(data.quantity);
 				const price = Number(data.item.price);
@@ -410,6 +443,21 @@ export default ()=>{
         }
     />
 	</Snackbar>
+	<Snackbar
+        anchorOrigin={{vertical:"top",horizontal:"center"}}
+        open={success}
+        autoHideDuration={5000}
+        onClose={()=>setSuccess(false)}>
+        <SnackbarContent
+        style={{backgroundColor:green[400]}}
+        message={
+            <span style={{display:"flex",alignItems:"center"}}>
+                <CheckCircle style={{fontSize:20,marginRight:"1rem"}}/>
+                Details Updated
+            </span>
+        }
+    />
+	</Snackbar>
 	<div style={{display:"flex",justifyContent:"space-around",height:"50px",fontFamily:"Roboto",fontSize:"1.3rem",color:"#4C51BF",fontWeight:"bold"}}>
 		<div>
 			T0TAL:
@@ -424,23 +472,37 @@ export default ()=>{
 			<span style={{marginLeft:"10px"}}>₹{total-advance}</span>
 		</div>
 	</div>
+	<div style={{display:"flex",justifyContent:"space-around",margin:"1rem 0"}}>
+		<div>
+		<Typography variant="button">Paid</Typography>
+		<Checkbox
+		checked={paid}
+		onChange={e=>setPaid(e.target.checked)}
+		/>
+		</div>
+		<div>
+		<Typography variant="button">vessel returned</Typography>
+		<Checkbox
+		checked={vessel}
+		onChange={e=>setVessel(e.target.checked)}
+		/>
+		</div>
+		<div>
+		<Typography variant="button">confirmed</Typography>
+		<Checkbox
+		checked={confirmed}
+		onChange={e=>setConfirmed(e.target.checked)}
+		/>
+		</div>
+	</div>
 	<div style={{display:"flex",justifyContent:"flex-end",padding:"1rem 2rem"}}>
 	<Button
 	variant="contained"
-	startIcon={<ShoppingCart/>}
+	startIcon={<Update/>}
 	style={{background:deepPurple[600],color:"#fff"}}
-	onClick={placeAndSave}
+	onClick={update}
 	>
-	Place And Save
-	</Button>
-	<div style={{margin:"0 10px"}}></div>
-	<Button
-	variant="contained"
-	startIcon={<Print/>}
-	style={{background:deepPurple[600],color:"#fff"}}
-	onClick={printAndSave}
-	>
-		Print and save
+	Update
 	</Button>
 	</div>
       </div>

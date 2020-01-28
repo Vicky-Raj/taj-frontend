@@ -1,5 +1,5 @@
 import React,{useState,useEffect,useRef} from "react";
-import {useParams} from "react-router-dom";
+import {useParams,useHistory} from "react-router-dom";
 import MaterialTable from 'material-table'
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import {TextField,
@@ -10,7 +10,8 @@ import {TextField,
 	InputLabel,
 	Snackbar,
 	SnackbarContent,
-	Button
+	Button,
+	Checkbox
 } from "@material-ui/core";
 import DateFnsUtils from '@date-io/date-fns'
 import {
@@ -23,7 +24,8 @@ import {Error,ShoppingCart,Print} from "@material-ui/icons";
 import {red,deepPurple} from "@material-ui/core/colors"
 
 export default ()=>{
-	console.log(useParams());
+	const history = useHistory();
+
 	const name = useRef();
 	const email = useRef();
 	const phoneNo = useRef();
@@ -39,6 +41,11 @@ export default ()=>{
 
 	const [orderedItems,setOrderedItems] = useState([]);
 	const [orderedSubItems,setOrderedSubItems] = useState([]);
+
+
+	const [confirm,setConfirm] = useState(true);
+
+	const [gst,setGst] = useState(false);
 
 
 	const [error,setError] = useState(false);
@@ -106,8 +113,10 @@ export default ()=>{
 			date,
 			session
 		}
-		axios.post(`${URL}/hotel/order/`,{items:allItems,subItems:allSubItems,customer,total,advance,balance:total-advance})
-		.then()
+		axios.post(`${URL}/hotel/order/`,{items:allItems,subItems:allSubItems,customer,total,advance,confirm,balance:total-advance})
+		.then(({data})=>{
+			if(confirm)history.push(`/order/${data.id}`)
+		})
 		.catch()
 	}
 
@@ -380,6 +389,22 @@ export default ()=>{
 			<span style={{marginLeft:"10px"}}>₹{total-advance}</span>
 		</div>
 	</div>
+	<div style={{display:"flex",justifyContent:"space-around",margin:"1rem 0"}}>
+		<div>
+		<Typography variant="button">Confirmed</Typography>
+		<Checkbox
+		checked={confirm}
+		onChange={e=>setConfirm(e.target.checked)}
+		/>
+		</div>
+		<div>
+		<Typography variant="button">gst</Typography>
+		<Checkbox
+		checked={gst}
+		onChange={e=>setGst(e.target.checked)}
+		/>
+		</div>
+	</div>
 	<div style={{display:"flex",justifyContent:"flex-end",padding:"1rem 2rem"}}>
 	<Button
 	variant="contained"
@@ -387,7 +412,7 @@ export default ()=>{
 	style={{background:deepPurple[600],color:"#fff"}}
 	onClick={placeAndSave}
 	>
-	Place And Save
+	Place order
 	</Button>
 	<div style={{margin:"0 10px"}}></div>
 	<Button
@@ -396,7 +421,7 @@ export default ()=>{
 	style={{background:deepPurple[600],color:"#fff"}}
 	onClick={printAndSave}
 	>
-		Print and save
+		Print
 	</Button>
 	</div>
       </div>
