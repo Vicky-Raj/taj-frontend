@@ -1,0 +1,16 @@
+.header .value-viewer{
+    padding: 5px;
+    color:black;
+    font-size: 1.3rem;
+    text-align: center;
+}
+
+.value-viewer{
+    padding: 10px;
+    font-family: "roboto";
+    color:#555;
+    font-size: 1.1rem;
+    text-align: center;
+    height: 20px;
+}
+

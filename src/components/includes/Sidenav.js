@@ -11,7 +11,7 @@ const Sidenav = () => {
 	const classes = useStyles()
 
 	return (
-		<div style={{position:"fixed",top:"5rem",left:"10px"}}>
+		<div style={{position:"fixed",top:"5rem",left:"10px",zIndex:100}}>
 			<Card className={classes.card}>
 				<Link to='/neworder'>
 					<CardContent style={{ backgroundColor: '#00c853' }}>
