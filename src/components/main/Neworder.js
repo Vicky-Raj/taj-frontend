@@ -125,7 +125,7 @@ export default () => {
 					data={orderedItems}
 					valueRenderer={cell => cell.value}
 					dataEditor={props => {
-						if (props.col === 1)
+						if (props.col === 1 && props.row !== orderedItems.length-1)
 							return (
 								<Autocomplete
 									onKeyDown={e => {
@@ -186,7 +186,7 @@ export default () => {
 								<input type="number" autoFocus onKeyDown={e => {
 									if (e.keyCode === 27) props.onRevert()
 									if (e.keyCode === 13) {
-										if (e.target.value !== "" && orderedItems[props.row][props.col].value) {
+										if (e.target.value !== "" && orderedItems[props.row][props.col].value !== null) {
 											setOrderItems(items => {
 												items[props.row][props.col].value = e.target.value;
 												if(props.row !== items.length - 1){
