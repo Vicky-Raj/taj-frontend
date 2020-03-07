@@ -27,32 +27,51 @@ export default () => {
 	const [address, setAddress] = useState("");
 	const [session, setSession] = useState("FN");
 	const [options, setOptions] = useState([]);
-	const [orderedItems, setOrderItems] = useState([
+	const [constItems,setItems] = useState({});
+	const [constSubitems,setSubitems] = useState({});
+	const [balance,setBalance] = useState(0);
+	const [orderedSubitems,setOrderSubitems] = useState([
 		[
-			{ value: "Name", readOnly: true, width: "400px", className: "header" },
-			{ value: "Price", readOnly: true, width: "400px", className: "header" },
-			{ value: "Quantity", readOnly: true, width: "400px", className: "header" },
-			{ value: "Total", readOnly: true, width: "400px", className: "header" },
+			{ value: "S.No", readOnly: true, width: "100px", className: "header" },
+			{ value: "Name", readOnly: true, width: "800px", className: "header" },
+			{ value: "Quantity", readOnly: true, width: "800px", className: "header" },
 		],
 		[
+			{ value: "", readOnly: true, width: "100px", className: "header" },
+			{ value: "", readOnly: true, width: "800px", className: "header" },
+			{ value: "", readOnly: true, width: "800px", className: "header" },
+		]
+	])
+	const [orderedItems, setOrderItems] = useState([
+		[
+			{ value: "S.No", readOnly: true, width: "100px", className: "header" },
+			{ value: "Name", readOnly: true, width: "400px", className: "header" },
+			{ value: "Price", readOnly: true, width: "400px", className: "header" },
+		 	{ value: "Quantity", readOnly: true, width: "400px", className: "header" },
+			{ value: "Total", readOnly: true, width: "400px", className: "header" },
+		],
+		[	{value:"",width:"100px",readOnly:true},
 			{ value: "", width: "400px" },
 			{ value: null, width: "400px" },
 			{ value: null, width: "400px" },
 			{ value: null, width: "400px" },
 		],
 		[
-			{ value: "Total Amount", colSpan: 3, width: "400px", readOnly: true },
+			{ value: "Total Amount", colSpan: 4, width: "400px", readOnly: true },
 			{ value: 0, width: "400px" }
 		]
 	]);
 	useEffect(() => {
 		axios.get(`${URL}/hotel/items/`)
 			.then(({ data }) => {
-				setOptions(data.map(item => ({
-					label: item.name,
-					id: item.unique_id,
-					price: item.price
-				})))
+				let options = [];
+				for(let item in data.items)
+					options.push({label:item,price:data.items[item].price})
+				for(let subitem in data.subitems)
+					options.push({label:subitem,price:data.subitems[subitem].price})
+				setItems(data.items);
+				setSubitems(data.subitems);
+				setOptions(options);
 			})
 	}, [])
 	return (
@@ -106,7 +125,7 @@ export default () => {
 					data={orderedItems}
 					valueRenderer={cell => cell.value}
 					dataEditor={props => {
-						if (props.col === 0)
+						if (props.col === 1)
 							return (
 								<Autocomplete
 									onKeyDown={e => {
@@ -119,26 +138,46 @@ export default () => {
 										setOrderItems(items => {
 											let total = 0;
 											items[props.row] = [
+												{value: "",width:"100px",readOnly:true},
 												{ value: item.label, width: "400px" },
 												{ value: item.price, width: "400px" },
 												{ value: 1, width: "400px" },
 												{ value: item.price, width: "400px" },
 											]
 
-											for (let i = 1; i < items.length - 1; i++)total += Number(items[i][3].value)
+											for (let i = 1; i < items.length - 1; i++)total += Number(items[i][4].value)
 											items[items.length - 1][1].value = total;
 
-											if (items[items.length - 2][0].value !== "")
+											if (items[items.length - 2][1].value !== "")
 												items.splice(items.length - 1, 0, [
+													{value: "",width:"100px",readOnly:true},
 													{ value: "", width: "400px" },
 													{ value: null, width: "400px" },
 													{ value: null, width: "400px" },
 													{ value: null, width: "400px" },
 												])
-
+											const subitems = [];
+											let index = 1;
+											for(let i=1;i<items.length-2;i++){
+												items[i][0].value = i.toString()
+												if(constItems.hasOwnProperty(items[i][1].value)){
+													for(let subitem of constItems[items[i][1].value].subitems){
+														subitems.push([
+															{value:index++,width:"100px",readOnly:true},
+															{value:subitem,width:"800px",readOnly:true},
+															{value:"1",width:"800px",readOnly:true}
+														])
+													}
+												}
+											}								
+											setOrderSubitems(orderedSubitems=>{
+												orderedSubitems = orderedSubitems.splice(0,1);
+												orderedSubitems.push(...subitems);
+												return [...orderedSubitems];
+											})
 											return [...items];
 										})
-										props.onCommit();
+										props.onRevert();
 									}}
 									options={options}
 								/>)
@@ -151,24 +190,73 @@ export default () => {
 											setOrderItems(items => {
 												items[props.row][props.col].value = e.target.value;
 												if(props.row !== items.length - 1){
-													if (props.col === 1 || props.col === 2) {
-														items[props.row][3].value = Number(items[props.row][1].value) * Number(items[props.row][2].value);
+													if (props.col === 2 || props.col === 3) {
+														items[props.row][4].value = Number(items[props.row][2].value) * Number(items[props.row][3].value);
 													}
 													let total = 0;
-													for (let i = 1; i < items.length - 1; i++)total += Number(items[i][3].value)
+													for (let i = 1; i < items.length - 1; i++)total += Number(items[i][4].value)
 													items[items.length - 1][1].value = total;
 												}	
 												return [...items];
 											});
 										}
-										props.onCommit()
+										props.onRevert();
 									}
 								}} defaultValue={props.value} required style={{ height: "100%", width: "100%", textAlign: "left", border: "none" }}>
 								</input>
 							);
 					}}
-				// onCellsChanged={data=>console.log(data)}
+					onCellsChanged={changes=>{
+						changes.forEach(change=>{
+							if(orderedItems[change.row][1].value !== "" && change.row !== orderedItems.length -1)
+							setOrderItems(items=>{
+								items.splice(change.row,1);
+								let total = 0;
+								
+								for (let i = 1; i < items.length - 1; i++)total += Number(items[i][4].value)
+								items[items.length - 1][1].value = total;
+
+								const subitems = [];
+								let index = 1;
+								for(let i=1;i<items.length-2;i++){
+									items[i][0].value = i.toString()
+									if(constItems.hasOwnProperty(items[i][1].value)){
+										for(let subitem of constItems[items[i][1].value].subitems){
+											subitems.push([
+												{value:index++,width:"100px",readOnly:true},
+												{value:subitem,width:"800px",readOnly:true},
+												{value:"1",width:"800px",readOnly:true}
+											])
+										}
+									}
+								}								
+								setOrderSubitems(orderedSubitems=>{
+									orderedSubitems = orderedSubitems.splice(0,1);
+									orderedSubitems.push(...subitems);
+									return [...orderedSubitems];
+								})
+								return [...items];
+							})
+						})
+					}}
 				/>
+			</div>
+			<div style={{ boxSizing: "border-box", padding: "0 10px", marginTop: "30px" }}>
+				<ReactDataSheet
+					data={orderedSubitems}
+					valueRenderer={cell => cell.value}
+				/>
+			</div>
+			<div style={{display:"flex", justifyContent:"space-around", marginTop: "30px" }}>
+				<div>
+					<Typography variant="button" style={{marginRight:"10px"}}>Advance:</Typography>
+					<TextField  value={balance} onChange={e=>setBalance(e.target.value)}/>
+				</div>
+				<div>
+					<Typography variant="button" style={{marginRight:"10px"}}>Balance:</Typography>
+					<Typography variant="button">{Number(orderedItems[orderedItems.length-1][1].value)-balance}</Typography>
+				</div>
+
 			</div>
 		</div>
 	);
