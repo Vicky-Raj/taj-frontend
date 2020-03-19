@@ -4,7 +4,9 @@ import {
 	TextField,
 	Select,
 	MenuItem,
-	InputLabel
+	InputLabel,
+	Checkbox,
+	Button
 } from "@material-ui/core";
 import {
 	KeyboardDatePicker,
@@ -30,6 +32,9 @@ export default () => {
 	const [constItems,setItems] = useState({});
 	const [constSubitems,setSubitems] = useState({});
 	const [balance,setBalance] = useState(0);
+	const [gstNumber,setGstNumber] = useState("");
+	const [gst, setGst] = React.useState(false);
+	const [confirmed, setConfirmed] = React.useState(true);
 	const [orderedSubitems,setOrderSubitems] = useState([
 		[
 			{ value: "S.No", readOnly: true, width: "100px", className: "header" },
@@ -61,6 +66,13 @@ export default () => {
 			{ value: 0, width: "400px" }
 		]
 	]);
+	const handleGst = event => {
+		console.log(event.target.gst)
+		setGst(event.target.gst);
+	}
+	const handleConfirmed = event => {
+		setConfirmed(event.target.confirmed)
+	}
 	useEffect(() => {
 		axios.get(`${URL}/hotel/items/`)
 			.then(({ data }) => {
@@ -84,6 +96,7 @@ export default () => {
 					<TextField label="Name" value={name} onChange={e => setName(e.target.value)} />
 					<TextField label="Email" style={{ marginTop: "10px" }} value={email} onChange={e => setEmail(e.target.value)} />
 					<TextField label="Phone Number" style={{ marginTop: "10px" }} value={phoneNo} onChange={e => setPhoneNo(e.target.value)} />
+					<TextField label="Gst Number" style={{marginTop:"10px"}} value={gstNumber} onChange={e=> setGstNumber(e.target.value)} />
 				</div>
 				<div style={{ flex: "2" }}></div>
 				<div style={{ display: "flex", flexDirection: "column", flex: "1" }}>
@@ -121,6 +134,9 @@ export default () => {
 				</div>
 			</div>
 			<div style={{ boxSizing: "border-box", padding: "0 10px", marginTop: "30px" }}>
+				<Typography variant="h6" style={{ color: "#00C853", boxSizing: "border-box", paddingLeft: "30px", paddingTop: "30px",paddingBottom: "20px" }}>
+					Items
+				</Typography>
 				<ReactDataSheet
 					data={orderedItems}
 					valueRenderer={cell => cell.value}
@@ -242,12 +258,15 @@ export default () => {
 				/>
 			</div>
 			<div style={{ boxSizing: "border-box", padding: "0 10px", marginTop: "30px" }}>
+				<Typography variant="h6" style={{ color: "#00C853", boxSizing: "border-box", paddingLeft: "30px", paddingTop: "30px",paddingBottom: "20px" }}>
+					Sub Items
+				</Typography>
 				<ReactDataSheet
 					data={orderedSubitems}
 					valueRenderer={cell => cell.value}
 				/>
 			</div>
-			<div style={{display:"flex", justifyContent:"space-around", marginTop: "30px" }}>
+			<div style={{display:"flex", justifyContent:"space-between", marginTop: "30px",paddingRight:"50px",paddingLeft:"50px" }}>
 				<div>
 					<Typography variant="button" style={{marginRight:"10px"}}>Advance:</Typography>
 					<TextField  value={balance} onChange={e=>setBalance(e.target.value)}/>
@@ -257,6 +276,30 @@ export default () => {
 					<Typography variant="button">{Number(orderedItems[orderedItems.length-1][1].value)-balance}</Typography>
 				</div>
 
+			</div>
+			<div style={{display:"flex",justifyContent:"space-between",padding:"20px"}}>
+					<div><Checkbox 
+						onChange = {handleGst}
+						value = "primary"
+						inputProps = {{'aria-label':'primary checkbox'}}
+					/> GST </div>
+					<div>
+						<Checkbox 
+							onChange = {handleConfirmed}
+							value = "primary"
+							inputProps = {{'aria-label':'primary checkbox'}}
+						/> Confirm
+					</div>
+					<div>
+						<Button variant="contained" color="primary">
+						Print Order
+						</Button>
+					</div>
+					<div>
+						<Button variant="contained" color="primary">
+						Place Order
+						</Button>
+					</div>
 			</div>
 		</div>
 	);
