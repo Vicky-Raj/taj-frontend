@@ -31,10 +31,10 @@ export default () => {
 	const [options, setOptions] = useState([]);
 	const [constItems,setItems] = useState({});
 	const [constSubitems,setSubitems] = useState({});
-	const [balance,setBalance] = useState(0);
+	const [advance,setAdvance] = useState(0);
 	const [gstNumber,setGstNumber] = useState("");
-	const [gst, setGst] = React.useState(false);
-	const [confirmed, setConfirmed] = React.useState(true);
+	const [gst, setGst] = useState(false);
+	const [confirmed, setConfirmed] = useState(true);
 	const [orderedSubitems,setOrderSubitems] = useState([
 		[
 			{ value: "S.No", readOnly: true, width: "100px", className: "header" },
@@ -67,11 +67,10 @@ export default () => {
 		]
 	]);
 	const handleGst = event => {
-		console.log(event.target.gst)
-		setGst(event.target.gst);
+		setGst(event.target.checked);
 	}
 	const handleConfirmed = event => {
-		setConfirmed(event.target.confirmed)
+		setConfirmed(event.target.checked)
 	}
 	useEffect(() => {
 		axios.get(`${URL}/hotel/items/`)
@@ -86,6 +85,36 @@ export default () => {
 				setOptions(options);
 			})
 	}, [])
+
+	const send = ()=>{
+		const customer = {
+			name,
+			email,
+			phoneNo,
+			date:delDate,
+			address,
+			session
+		}
+		const items = []
+		for(let i=1;i<orderedItems.length-2;i++){
+			let unique_id;
+			if(constItems.hasOwnProperty(orderedItems[i][1].value)){
+				unique_id = constItems[orderedItems[i][1].value].unique_id;
+			}
+			else{
+				unique_id = constSubitems[orderedItems[i][1].value].unique_id;
+			}
+			const quantity = Number(orderedItems[i][3].value);
+			const amount = Number(orderedItems[i][4].value);
+			items.push({unique_id,quantity,amount});
+		}
+		const total = Number(orderedItems[orderedItems.length-1][1].value)
+		const balance = total-advance;
+		axios.post(`${URL}/hotel/order/`,JSON.stringify({customer,items,total,advance,balance,gst:gstNumber,hasGst:gst,confirm:confirmed}))
+		.then(()=>{})		
+
+	}
+
 	return (
 		<div>
 			<Typography variant="h6" style={{ color: "#00C853", boxSizing: "border-box", paddingLeft: "30px", paddingTop: "30px" }}>
@@ -269,11 +298,11 @@ export default () => {
 			<div style={{display:"flex", justifyContent:"space-between", marginTop: "30px",paddingRight:"50px",paddingLeft:"50px" }}>
 				<div>
 					<Typography variant="button" style={{marginRight:"10px"}}>Advance:</Typography>
-					<TextField  value={balance} onChange={e=>setBalance(e.target.value)}/>
+					<TextField  value={advance} onChange={e=>setAdvance(Number(e.target.value))}/>
 				</div>
 				<div>
 					<Typography variant="button" style={{marginRight:"10px"}}>Balance:</Typography>
-					<Typography variant="button">{Number(orderedItems[orderedItems.length-1][1].value)-balance}</Typography>
+					<Typography variant="button">{Number(orderedItems[orderedItems.length-1][1].value)-advance}</Typography>
 				</div>
 
 			</div>
@@ -296,7 +325,7 @@ export default () => {
 						</Button>
 					</div>
 					<div>
-						<Button variant="contained" color="primary">
+						<Button variant="contained" color="primary" onClick={send}>
 						Place Order
 						</Button>
 					</div>
