@@ -6,11 +6,12 @@ import InputLabel from '@material-ui/core/InputLabel'
 import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
 import Select from '@material-ui/core/Select'
-import EstimatedOrder from './history/EstimatedOrder'
-import OrderReport from './history/OrderReport'
+import AllOrder from './history/AllOrder'
+import RangeOrder from './history/RangeOrder'
+import DateOrder from './history/DateOrder'
 
 const History = () => {
-	const [option, setoption] = useState('order report')
+	const [option, setoption] = useState('All')
 
 	const handleChange = e => {
 		setoption(e.target.value)
@@ -35,8 +36,9 @@ const History = () => {
 								value={option}
 								onChange={handleChange}
 							>
-								<MenuItem value={'order report'}>order report</MenuItem>
-								<MenuItem value={'estimated order'}>estimated order</MenuItem>
+								<MenuItem value={'All'}>All</MenuItem>
+								<MenuItem value={'Date'}>Date</MenuItem>
+								<MenuItem value={'Range'}>Range</MenuItem>
 							</Select>
 						</FormControl>
 					</Grid>
@@ -44,8 +46,9 @@ const History = () => {
 				</Grid>
 			</div>
 
-			{option === 'order report' && <OrderReport />}
-			{option === 'estimated order' && <EstimatedOrder />}
+			{option === 'Date' && <DateOrder />}
+			{option === 'All' && <AllOrder />}
+			{option === 'Range' && <RangeOrder />}
 		</div>
 	)
 }
